@@ -1,0 +1,12 @@
+[project]
+name = "high-street-property-occupancy-tracking-mlflow"
+version = "0.1.0"
+description = "MLflow deployment baseline for high-street-property-occupancy-tracking."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "mlflow>=2.12.0",
+]
+
+[tool.uv]
+dev-dependencies = []
