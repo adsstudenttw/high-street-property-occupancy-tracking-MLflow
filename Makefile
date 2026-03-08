@@ -1,5 +1,6 @@
 SHELL := /bin/bash
 UV_BIN := $(shell command -v uv 2>/dev/null || echo "$(HOME)/.local/bin/uv")
+DATA_ROOT := $(HOME)/data/mlflow_test_storage
 
 .PHONY: help vm-bootstrap docker-install uv-install sync init-dirs build up down logs ps local clean
 
@@ -35,7 +36,7 @@ sync:
 	@$(UV_BIN) sync
 
 init-dirs:
-	@mkdir -p data/mlruns data/mlartifacts
+	@mkdir -p $(DATA_ROOT)/mlruns $(DATA_ROOT)/mlartifacts
 
 build:
 	@docker compose build
@@ -56,8 +57,8 @@ local: init-dirs
 	@$(UV_BIN) run mlflow server \
 		--host 0.0.0.0 \
 		--port 5000 \
-		--backend-store-uri sqlite:///data/mlruns/mlflow.db \
-		--default-artifact-root ./data/mlartifacts
+		--backend-store-uri sqlite:///$(DATA_ROOT)/mlruns/mlflow.db \
+		--default-artifact-root $(DATA_ROOT)/mlartifacts
 
 clean:
-	@rm -rf .venv .pytest_cache .mypy_cache data
+	@rm -rf .venv .pytest_cache .mypy_cache

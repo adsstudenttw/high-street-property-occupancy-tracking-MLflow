@@ -8,5 +8,5 @@ services:
     ports:
       - "5000:5000"
     volumes:
-      - ./data/mlruns:/app/mlruns
-      - ./data/mlartifacts:/app/mlartifacts
+      - ${DATA_ROOT}/mlruns:/app/mlruns
+      - ${DATA_ROOT}/mlartifacts:/app/mlartifacts
