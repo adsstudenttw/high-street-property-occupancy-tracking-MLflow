@@ -19,8 +19,8 @@ if [[ "${ID:-}" != "ubuntu" || "${VERSION_ID:-}" != "22.04" ]]; then
   exit 1
 fi
 
-SURF_VOLUME_ROOT="${SURF_VOLUME_ROOT:-/data/boosttrack_storage}"
-DATA_ROOT="${DATA_ROOT:-${SURF_VOLUME_ROOT}/data/mlflow_test_storage}"
+SURF_VOLUME_ROOT="${SURF_VOLUME_ROOT:-/data/mlflow_test_storage}"
+DATA_ROOT="${DATA_ROOT:-${SURF_VOLUME_ROOT}/mlflow_data}"
 DOCKER_DATA_ROOT="${DOCKER_DATA_ROOT:-${SURF_VOLUME_ROOT}/docker}"
 CONTAINERD_ROOT="${CONTAINERD_ROOT:-${SURF_VOLUME_ROOT}/containerd}"
 TMPDIR="${TMPDIR:-${SURF_VOLUME_ROOT}/tmp}"

@@ -9,17 +9,17 @@ The repository is designed to work well with a mounted SURF volume so the large 
 - Ubuntu 22.04 VM
 - `sudo` access
 - Internet access to install Docker and `uv`
-- A mounted SURF volume for large writable data, for example `/data/boosttrack_storage`
+- A mounted SURF volume for large writable data, for example `/data/mlflow_test_storage`
 
 ## Storage layout
 
-By default, the project now uses `/data/boosttrack_storage` as the root for all large mutable data:
+By default, the project now uses `/data/mlflow_test_storage` as the root for all large mutable data:
 
 - Repository checkout: clone this repository onto the mounted SURF volume
-- MLflow DB and artifacts: `/data/boosttrack_storage/data/mlflow_test_storage`
-- Docker data-root: `/data/boosttrack_storage/docker`
-- containerd persistent storage: `/data/boosttrack_storage/containerd`
-- Temporary files used by this project: `/data/boosttrack_storage/tmp`
+- MLflow DB and artifacts: `/data/mlflow_test_storage/mlflow_data`
+- Docker data-root: `/data/mlflow_test_storage/docker`
+- containerd persistent storage: `/data/mlflow_test_storage/containerd`
+- Temporary files used by this project: `/data/mlflow_test_storage/tmp`
 
 Override the mount point by setting `SURF_VOLUME_ROOT` before running `make` targets.
 
@@ -36,7 +36,7 @@ Small OS-managed files still use the root disk, including Docker binaries and sy
 Mount your SURF volume first and clone the repository onto it. Example:
 
 ```bash
-export SURF_VOLUME_ROOT=/data/boosttrack_storage
+export SURF_VOLUME_ROOT=/data/mlflow_test_storage
 cd "$SURF_VOLUME_ROOT"
 git clone <your-repo-url>
 cd high-street-property-occupancy-tracking-MLflow
@@ -45,7 +45,7 @@ cd high-street-property-occupancy-tracking-MLflow
 Run the full VM bootstrap:
 
 ```bash
-export SURF_VOLUME_ROOT=/data/boosttrack_storage
+export SURF_VOLUME_ROOT=/data/mlflow_test_storage
 make vm-bootstrap
 ```
 
@@ -58,7 +58,7 @@ This will:
 Start MLflow:
 
 ```bash
-export SURF_VOLUME_ROOT=/data/boosttrack_storage
+export SURF_VOLUME_ROOT=/data/mlflow_test_storage
 make up
 ```
 
@@ -108,8 +108,8 @@ These environment variables control where data is written:
 Example:
 
 ```bash
-export SURF_VOLUME_ROOT=/data/boosttrack_storage
-export DATA_ROOT=$SURF_VOLUME_ROOT/data/mlflow_test_storage
+export SURF_VOLUME_ROOT=/data/mlflow_test_storage
+export DATA_ROOT=$SURF_VOLUME_ROOT/mlflow_data
 export DOCKER_DATA_ROOT=$SURF_VOLUME_ROOT/docker
 export CONTAINERD_ROOT=$SURF_VOLUME_ROOT/containerd
 export TMPDIR=$SURF_VOLUME_ROOT/tmp

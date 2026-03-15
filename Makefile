@@ -1,7 +1,7 @@
 SHELL := /bin/bash
-SURF_VOLUME_ROOT ?= /data/boosttrack_storage
+SURF_VOLUME_ROOT ?= /data/mlflow_test_storage
 export SURF_VOLUME_ROOT
-export DATA_ROOT ?= $(SURF_VOLUME_ROOT)/data/mlflow_test_storage
+export DATA_ROOT ?= $(SURF_VOLUME_ROOT)/mlflow_data
 export DOCKER_DATA_ROOT ?= $(SURF_VOLUME_ROOT)/docker
 export CONTAINERD_ROOT ?= $(SURF_VOLUME_ROOT)/containerd
 export TMPDIR ?= $(SURF_VOLUME_ROOT)/tmp
