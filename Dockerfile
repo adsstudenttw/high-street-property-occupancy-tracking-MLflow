@@ -21,4 +21,4 @@ COPY . .
 
 EXPOSE 5000
 
-CMD ["uv", "run", "mlflow", "server", "--host", "0.0.0.0", "--port", "5000", "--backend-store-uri", "sqlite:///mlruns/mlflow.db", "--default-artifact-root", "/app/mlartifacts"]
+CMD ["uv", "run", "mlflow", "server", "--host", "0.0.0.0", "--port", "5000", "--backend-store-uri", "sqlite:///mlruns/mlflow.db", "--artifacts-destination", "/app/mlartifacts", "--serve-artifacts"]

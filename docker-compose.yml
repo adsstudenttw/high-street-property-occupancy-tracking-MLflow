@@ -6,7 +6,7 @@ services:
     container_name: mlflow-server
     restart: unless-stopped
     ports:
-      - "5000:5000"
+      - "${MLFLOW_HOST_PORT:-80}:5000"
     volumes:
       - ${DATA_ROOT}/mlruns:/app/mlruns
       - ${DATA_ROOT}/mlartifacts:/app/mlartifacts

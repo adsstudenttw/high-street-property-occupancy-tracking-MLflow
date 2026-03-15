@@ -1,6 +1,7 @@
 SHELL := /bin/bash
 UV_BIN := $(shell command -v uv 2>/dev/null || echo "$(HOME)/.local/bin/uv")
-DATA_ROOT := $(HOME)/data/mlflow_test_storage
+export DATA_ROOT ?= $(HOME)/data/mlflow_test_storage
+export MLFLOW_HOST_PORT ?= 80
 
 .PHONY: help vm-bootstrap docker-install uv-install sync init-dirs build up down logs ps local clean
 
@@ -18,6 +19,10 @@ help:
 	@echo "  make ps             - Show MLflow container status"
 	@echo "  make local          - Run MLflow locally (without Docker)"
 	@echo "  make clean          - Remove local env/cache/data"
+	@echo ""
+	@echo "Configurable variables:"
+	@echo "  DATA_ROOT           - Host directory for MLflow DB and artifacts"
+	@echo "  MLFLOW_HOST_PORT    - Host port exposed by Docker Compose (default: 80)"
 
 vm-bootstrap: docker-install init-dirs
 
@@ -58,7 +63,8 @@ local: init-dirs
 		--host 0.0.0.0 \
 		--port 5000 \
 		--backend-store-uri sqlite:///$(DATA_ROOT)/mlruns/mlflow.db \
-		--default-artifact-root $(DATA_ROOT)/mlartifacts
+		--artifacts-destination $(DATA_ROOT)/mlartifacts \
+		--serve-artifacts
 
 clean:
 	@rm -rf .venv .pytest_cache .mypy_cache
