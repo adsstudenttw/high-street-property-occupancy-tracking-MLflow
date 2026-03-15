@@ -31,7 +31,8 @@ install -d -m 0700 "${DOCKER_DATA_ROOT}" "${CONTAINERD_ROOT}"
 install -d -m 0755 "${DATA_ROOT}/mlruns" "${DATA_ROOT}/mlartifacts"
 
 if [[ -n "${SUDO_USER:-}" && "${SUDO_USER}" != "root" ]]; then
-  chown -R "${SUDO_USER}:${SUDO_USER}" "${DATA_ROOT}" "${TMPDIR}"
+  sudo_group="$(id -gn "${SUDO_USER}")"
+  chown -R "${SUDO_USER}:${sudo_group}" "${DATA_ROOT}" "${TMPDIR}"
 fi
 
 apt_get() {
