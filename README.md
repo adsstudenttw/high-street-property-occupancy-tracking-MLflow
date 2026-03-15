@@ -2,28 +2,63 @@
 
 MLflow 2.18.0 server setup for a SURF Research Cloud VM (Ubuntu 22.04) using Docker, with Python dependencies managed by `uv` in the container image.
 
+The repository is designed to work well with a mounted SURF volume so the large writable data stays off the VM root disk.
+
 ## Prerequisites
 
 - Ubuntu 22.04 VM
 - `sudo` access
 - Internet access to install Docker and `uv`
+- A mounted SURF volume for large writable data, for example `/data/boosttrack_storage`
+
+## Storage layout
+
+By default, the project now uses `/data/boosttrack_storage` as the root for all large mutable data:
+
+- Repository checkout: clone this repository onto the mounted SURF volume
+- MLflow DB and artifacts: `/data/boosttrack_storage/data/mlflow_test_storage`
+- Docker data-root: `/data/boosttrack_storage/docker`
+- containerd persistent storage: `/data/boosttrack_storage/containerd`
+- Temporary files used by this project: `/data/boosttrack_storage/tmp`
+
+Override the mount point by setting `SURF_VOLUME_ROOT` before running `make` targets.
+
+Important caveat: the large mutable data is moved to the SURF volume, but Ubuntu package installation still places Docker binaries and system configuration under standard system paths such as `/usr`, `/lib`, and `/etc` on the root disk. This repository minimizes root-disk growth; it cannot relocate the operating system itself.
+
+## Disk usage caveat
+
+Large project data lives on the SURF volume: the repository checkout, Docker data-root, containerd storage, MLflow artifacts/database, and the temporary directory used by this setup.
+
+Small OS-managed files still use the root disk, including Docker binaries and system configuration installed by Ubuntu packages.
 
 ## Quickstart
+
+Mount your SURF volume first and clone the repository onto it. Example:
+
+```bash
+export SURF_VOLUME_ROOT=/data/boosttrack_storage
+cd "$SURF_VOLUME_ROOT"
+git clone <your-repo-url>
+cd high-street-property-occupancy-tracking-MLflow
+```
 
 Run the full VM bootstrap:
 
 ```bash
+export SURF_VOLUME_ROOT=/data/boosttrack_storage
 make vm-bootstrap
 ```
 
 This will:
 
 - Install Docker Engine + Docker Compose plugin
-- Create local data directories used by MLflow
+- Configure Docker `data-root` and containerd persistent storage on the SURF volume
+- Create MLflow data, cache, and temporary directories on the SURF volume
 
 Start MLflow:
 
 ```bash
+export SURF_VOLUME_ROOT=/data/boosttrack_storage
 make up
 ```
 
@@ -53,13 +88,32 @@ make down
 
 - `make help`: show all targets
 - `make docker-install`: install Docker on Ubuntu 22.04
-- `make uv-install`: install `uv` on host (optional for local non-Docker runs)
-- `make sync`: install Python dependencies on host with `uv` (optional)
 - `make build`: build the MLflow Docker image
 - `make up`: start MLflow in Docker
 - `make logs`: tail MLflow logs
 - `make down`: stop MLflow
 - `make clean`: remove local cache/data directories
+
+## Configuration
+
+These environment variables control where data is written:
+
+- `SURF_VOLUME_ROOT`: mounted SURF volume used for large writable data
+- `DATA_ROOT`: MLflow backend store and artifact directory root
+- `DOCKER_DATA_ROOT`: Docker daemon storage location
+- `CONTAINERD_ROOT`: containerd persistent storage location
+- `TMPDIR`: temporary directory used by the installer
+- `MLFLOW_HOST_PORT`: public host port exposed by Docker Compose
+
+Example:
+
+```bash
+export SURF_VOLUME_ROOT=/data/boosttrack_storage
+export DATA_ROOT=$SURF_VOLUME_ROOT/data/mlflow_test_storage
+export DOCKER_DATA_ROOT=$SURF_VOLUME_ROOT/docker
+export CONTAINERD_ROOT=$SURF_VOLUME_ROOT/containerd
+export TMPDIR=$SURF_VOLUME_ROOT/tmp
+```
 
 ## Remote logging from another VM
 
@@ -100,13 +154,3 @@ Or, if all VMs communicate over the SURF private network:
 ```
 
 If you need encryption or broader access, place MLflow behind HTTPS on port `443` with a reverse proxy such as Nginx.
-
-## Local (non-Docker) run (optional)
-
-If you also want to run MLflow directly on the VM host for debugging:
-
-```bash
-make uv-install
-make sync
-make local
-```
