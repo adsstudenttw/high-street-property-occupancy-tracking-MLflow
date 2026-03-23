@@ -7,7 +7,7 @@ export CONTAINERD_ROOT ?= $(SURF_VOLUME_ROOT)/containerd
 export TMPDIR ?= $(SURF_VOLUME_ROOT)/tmp
 export MLFLOW_HOST_PORT ?= 80
 
-.PHONY: help vm-bootstrap docker-install docker-storage-configure sync-env init-dirs build up down logs ps clean
+.PHONY: help vm-bootstrap docker-install docker-storage-configure sync-env init-dirs build up down logs logs-once ps clean
 
 help:
 	@echo "Available targets:"
@@ -20,6 +20,7 @@ help:
 	@echo "  make up             - Start MLflow service with Docker Compose"
 	@echo "  make down           - Stop MLflow service"
 	@echo "  make logs           - Stream MLflow logs"
+	@echo "  make logs-once      - Show recent MLflow logs without following"
 	@echo "  make ps             - Show MLflow container status"
 	@echo "  make clean          - Remove local env/cache/data"
 	@echo ""
@@ -93,6 +94,9 @@ down:
 
 logs:
 	@docker compose logs -f mlflow
+
+logs-once:
+	@docker compose logs --tail=200 mlflow
 
 ps:
 	@docker compose ps
