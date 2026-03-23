@@ -84,10 +84,77 @@ Stop MLflow:
 make down
 ```
 
+## Migrating To A New SURF Volume
+
+If your current SURF volume is filling up, you can move the repository checkout and all large writable data to a new mounted volume.
+
+The safest sequence is:
+
+1. Attach the new SURF volume to the workspace and mount it on the VM, for example at `/data/mlflow_large`.
+2. Stop MLflow:
+
+```bash
+cd /path/to/high-street-property-occupancy-tracking-MLflow
+make down
+```
+
+3. Stop Docker and containerd before copying their storage directories:
+
+```bash
+sudo systemctl stop docker.service docker.socket containerd.service
+```
+
+4. Copy the entire old SURF volume contents to the new one and keep the old volume untouched until you have verified the new setup:
+
+```bash
+export OLD_SURF_VOLUME_ROOT=/data/mlflow_test_storage
+export NEW_SURF_VOLUME_ROOT=/data/mlflow_large
+sudo rsync -aHAX --info=progress2 "$OLD_SURF_VOLUME_ROOT"/ "$NEW_SURF_VOLUME_ROOT"/
+```
+
+5. Start using the repository copy on the new volume:
+
+```bash
+cd "$NEW_SURF_VOLUME_ROOT/high-street-property-occupancy-tracking-MLflow"
+export SURF_VOLUME_ROOT="$NEW_SURF_VOLUME_ROOT"
+export DATA_ROOT="$SURF_VOLUME_ROOT/mlflow_data"
+export DOCKER_DATA_ROOT="$SURF_VOLUME_ROOT/docker"
+export CONTAINERD_ROOT="$SURF_VOLUME_ROOT/containerd"
+export TMPDIR="$SURF_VOLUME_ROOT/tmp"
+```
+
+6. Repoint Docker and containerd to the new storage location:
+
+```bash
+make docker-storage-configure
+```
+
+7. Update `.env` so direct `docker compose` commands also use the new data path:
+
+```bash
+make sync-env
+```
+
+8. Start MLflow again from the new repository path:
+
+```bash
+make up
+```
+
+9. Verify that existing experiments, runs, metrics, and artifacts are still visible in the MLflow UI before detaching or deleting the old volume.
+
+Notes:
+
+- If you rely on `.env` for `docker compose` commands outside `make`, update it to the new `DATA_ROOT` value after the move.
+- If the repository checkout is not currently stored on the old SURF volume, copy or clone the repository onto the new volume separately.
+- The operating system itself still remains on the VM root disk. This migration moves the project checkout, MLflow data, Docker data-root, containerd storage, and temporary files.
+
 ## Useful commands
 
 - `make help`: show all targets
 - `make docker-install`: install Docker on Ubuntu 22.04
+- `make docker-storage-configure`: reconfigure Docker and containerd storage roots
+- `make sync-env`: update `.env` with the current `DATA_ROOT`
 - `make build`: build the MLflow Docker image
 - `make up`: start MLflow in Docker
 - `make logs`: tail MLflow logs

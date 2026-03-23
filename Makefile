@@ -7,12 +7,14 @@ export CONTAINERD_ROOT ?= $(SURF_VOLUME_ROOT)/containerd
 export TMPDIR ?= $(SURF_VOLUME_ROOT)/tmp
 export MLFLOW_HOST_PORT ?= 80
 
-.PHONY: help vm-bootstrap docker-install init-dirs build up down logs ps clean
+.PHONY: help vm-bootstrap docker-install docker-storage-configure sync-env init-dirs build up down logs ps clean
 
 help:
 	@echo "Available targets:"
 	@echo "  make vm-bootstrap   - Install Docker and initialize MLflow directories"
 	@echo "  make docker-install - Install Docker Engine + Compose plugin on Ubuntu 22.04"
+	@echo "  make docker-storage-configure - Repoint Docker/containerd storage to SURF volume"
+	@echo "  make sync-env       - Write the current DATA_ROOT to .env for docker compose"
 	@echo "  make init-dirs      - Create local MLflow backend/artifact directories"
 	@echo "  make build          - Build Docker image"
 	@echo "  make up             - Start MLflow service with Docker Compose"
@@ -49,6 +51,28 @@ docker-install:
 			TMPDIR="$(TMPDIR)" \
 			bash scripts/install_docker_ubuntu2204.sh; \
 	fi
+
+docker-storage-configure:
+	@if [ "$$(id -u)" -ne 0 ]; then \
+		sudo env \
+			SURF_VOLUME_ROOT="$(SURF_VOLUME_ROOT)" \
+			DATA_ROOT="$(DATA_ROOT)" \
+			DOCKER_DATA_ROOT="$(DOCKER_DATA_ROOT)" \
+			CONTAINERD_ROOT="$(CONTAINERD_ROOT)" \
+			TMPDIR="$(TMPDIR)" \
+			bash scripts/configure_docker_storage.sh; \
+	else \
+		env \
+			SURF_VOLUME_ROOT="$(SURF_VOLUME_ROOT)" \
+			DATA_ROOT="$(DATA_ROOT)" \
+			DOCKER_DATA_ROOT="$(DOCKER_DATA_ROOT)" \
+			CONTAINERD_ROOT="$(CONTAINERD_ROOT)" \
+			TMPDIR="$(TMPDIR)" \
+			bash scripts/configure_docker_storage.sh; \
+	fi
+
+sync-env:
+	@printf 'DATA_ROOT=%s\n' "$(DATA_ROOT)" > .env
 
 init-dirs:
 	@mkdir -p \
