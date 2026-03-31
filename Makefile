@@ -6,8 +6,9 @@ export DOCKER_DATA_ROOT ?= $(SURF_VOLUME_ROOT)/docker
 export CONTAINERD_ROOT ?= $(SURF_VOLUME_ROOT)/containerd
 export TMPDIR ?= $(SURF_VOLUME_ROOT)/tmp
 export MLFLOW_HOST_PORT ?= 80
+export MLFLOW_GC_TRACKING_URI ?= http://127.0.0.1:5000
 
-.PHONY: help vm-bootstrap docker-install docker-storage-configure sync-env init-dirs build up down logs logs-once ps clean
+.PHONY: help vm-bootstrap docker-install docker-storage-configure sync-env init-dirs build up down logs logs-once ps storage-usage mlflow-gc clean
 
 help:
 	@echo "Available targets:"
@@ -22,6 +23,8 @@ help:
 	@echo "  make logs           - Stream MLflow logs"
 	@echo "  make logs-once      - Show recent MLflow logs without following"
 	@echo "  make ps             - Show MLflow container status"
+	@echo "  make storage-usage  - Show SURF-volume usage for MLflow and Docker paths"
+	@echo "  make mlflow-gc      - Permanently delete MLflow runs/experiments in deleted state"
 	@echo "  make clean          - Remove local env/cache/data"
 	@echo ""
 	@echo "Configurable variables:"
@@ -31,6 +34,10 @@ help:
 	@echo "  CONTAINERD_ROOT     - containerd persistent storage on the SURF volume"
 	@echo "  TMPDIR              - Temporary directory on the SURF volume"
 	@echo "  MLFLOW_HOST_PORT    - Host port exposed by Docker Compose (default: 80)"
+	@echo "  MLFLOW_GC_TRACKING_URI - Tracking URI used by 'make mlflow-gc' inside the container"
+	@echo "  GC_OLDER_THAN       - Optional age filter for 'make mlflow-gc' (for example: 7d)"
+	@echo "  GC_RUN_IDS          - Optional comma-separated run ids for 'make mlflow-gc'"
+	@echo "  GC_EXPERIMENT_IDS   - Optional comma-separated experiment ids for 'make mlflow-gc'"
 
 vm-bootstrap: docker-install init-dirs
 
@@ -100,6 +107,30 @@ logs-once:
 
 ps:
 	@docker compose ps
+
+storage-usage:
+	@for path in \
+		"$(SURF_VOLUME_ROOT)" \
+		"$(DATA_ROOT)" \
+		"$(DATA_ROOT)/mlruns" \
+		"$(DATA_ROOT)/mlartifacts" \
+		"$(DOCKER_DATA_ROOT)" \
+		"$(CONTAINERD_ROOT)" \
+		"$(TMPDIR)"; do \
+		if [ -e "$$path" ]; then \
+			du -sh "$$path"; \
+		else \
+			echo "missing $$path"; \
+		fi; \
+	done
+
+mlflow-gc:
+	@args=(--backend-store-uri sqlite:///mlruns/mlflow.db --artifacts-destination /app/mlartifacts); \
+	if [ -n "$(GC_OLDER_THAN)" ]; then args+=(--older-than "$(GC_OLDER_THAN)"); fi; \
+	if [ -n "$(GC_RUN_IDS)" ]; then args+=(--run-ids "$(GC_RUN_IDS)"); fi; \
+	if [ -n "$(GC_EXPERIMENT_IDS)" ]; then args+=(--experiment-ids "$(GC_EXPERIMENT_IDS)"); fi; \
+	echo "Running MLflow garbage collection with tracking URI $(MLFLOW_GC_TRACKING_URI)"; \
+	MLFLOW_TRACKING_URI="$(MLFLOW_GC_TRACKING_URI)" docker compose exec -T mlflow uv run mlflow gc "$${args[@]}"
 
 clean:
 	@rm -rf .venv .pytest_cache .mypy_cache
