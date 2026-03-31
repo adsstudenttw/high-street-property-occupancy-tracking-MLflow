@@ -130,7 +130,10 @@ mlflow-gc:
 	if [ -n "$(GC_RUN_IDS)" ]; then args+=(--run-ids "$(GC_RUN_IDS)"); fi; \
 	if [ -n "$(GC_EXPERIMENT_IDS)" ]; then args+=(--experiment-ids "$(GC_EXPERIMENT_IDS)"); fi; \
 	echo "Running MLflow garbage collection with tracking URI $(MLFLOW_GC_TRACKING_URI)"; \
-	MLFLOW_TRACKING_URI="$(MLFLOW_GC_TRACKING_URI)" docker compose exec -T mlflow uv run mlflow gc "$${args[@]}"
+	docker compose exec -T \
+		-e MLFLOW_TRACKING_URI="$(MLFLOW_GC_TRACKING_URI)" \
+		mlflow \
+		uv run mlflow gc "$${args[@]}"
 
 clean:
 	@rm -rf .venv .pytest_cache .mypy_cache
